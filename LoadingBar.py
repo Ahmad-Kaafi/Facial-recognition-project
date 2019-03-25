@@ -32,7 +32,7 @@ if __name__ == "__main__":
     app = DemoSplashScreen(root)
     progressbar.start()
 
-    root.after(9300, root.destroy)
+    root.after(1000, root.destroy)
     root.mainloop()
 
 

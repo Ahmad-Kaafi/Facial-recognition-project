@@ -131,7 +131,7 @@ progressbar = ttk.Progressbar(root, orient=HORIZONTAL, length=8000, mode='determ
 progressbar.pack(side="bottom")
 progressbar.start()
 
-root.after(12000, root.destroy)
+root.after(15000, root.destroy)
 root.attributes('-topmost', 'true')
 root.overrideredirect(True)
 

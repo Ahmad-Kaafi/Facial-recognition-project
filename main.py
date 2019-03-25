@@ -23,12 +23,12 @@ import tensorflow as tf
 
 class App:
     emotions_text = ""
-
+    dlib_text = ""
     def __init__(self, window, window_title, video_source=0):
         self.window = window
         self.window.title(window_title)
         self.window.iconbitmap(r'Asset_10.ico')
-        # self.window.geometry("1075x556")
+        #self.window.geometry("1075x569")
         self.window.configure(background="#716D6B")
         self.window.resizable(False, False)
         self.video_source = video_source
@@ -37,6 +37,10 @@ class App:
         menuBar = Menu(window)
         # initialize filemenu, exit command and add to menubar
         fileMenu = Menu(menuBar, tearoff=0)
+        fileMenu.add_command(label="Open", accelerator="Ctrl+O") #command=window.openFile TODO Make a openfile function
+        fileMenu.add_command(label="Save Data", accelerator="Ctrl+S") #command=window.saveFile
+        fileMenu.add_command(label="Record Video", accelerator="Ctrl+R") #command=window.recordVideo
+        fileMenu.add_separator()
         fileMenu.add_command(label="Exit", command=window.quit, accelerator="Ctrl+Q")
         menuBar.add_cascade(label="File", menu=fileMenu)
 
@@ -45,8 +49,11 @@ class App:
         # initialize changeView submenu to viewmenu
         changeView = Menu(viewMenu, tearoff=0)
         changeView.add_command(label="Basic View", command=self.setNormal, accelerator="Ctrl+F")
+        self.window.bind("<Control-f>", self.setNormal)
         changeView.add_command(label="Facial Analysis", command=self.setDlib, accelerator="Ctrl+G")
+        self.window.bind("<Control-g>", self.setDlib)
         changeView.add_command(label="Emotion Detector", command=self.setEmotion, accelerator="Ctrl+H")
+        self.window.bind("<Control-h>", self.setEmotion)
         # Add submenu to viewmenu
         viewMenu.add_cascade(label="Change View", menu=changeView)
         menuBar.add_cascade(label="View", menu=viewMenu)
@@ -54,6 +61,7 @@ class App:
         # initialize help menu
         helpMenu = Menu(menuBar, tearoff=0)
         helpMenu.add_command(label="About", command=self.aboutPanel, accelerator="Ctrl+I")
+        self.window.bind("<Control-i>", self.aboutPanel)
         menuBar.add_cascade(label="Help", menu=helpMenu)
 
         window.config(menu=menuBar)
@@ -61,30 +69,32 @@ class App:
 
         # Text box frame
         self.dialogFrame = Frame(window, borderwidth=1, relief="sunken")
-        self.dialogFrame.grid(row=0, column=1, sticky=N + S + W, padx=(2, 2), pady=(8, 8))
-        self.dataDisplay = tkst.ScrolledText(self.dialogFrame, wrap=NONE, borderwidth=1, width=50, height=30,
-                                             state="normal", font='System 10 bold')
-        self.dataDisplay.pack(fill=Y, expand=False)
+        self.dialogFrame.grid(row=0, column=1, rowspan=2, sticky=N+S+W, padx=(2, 2), pady=(8, 8))
+        self.topDataDisplay = tkst.ScrolledText(self.dialogFrame, wrap=NONE, borderwidth=1, width=50, height=16.5, state="normal", font='System 10 bold')
+        self.topDataDisplay.pack(fill=Y, expand=False)
 
+        self.botDataDisplay = tkst.ScrolledText(self.dialogFrame, wrap=NONE, borderwidth=1, width=50, height=16.5, state="normal", font='System 10 bold')
+        self.botDataDisplay.pack(fill=Y, expand=False)
+        
         # south frame/button panel
         self.southFrame = Frame(window, borderwidth=1, relief="ridge", width=1075, background="#ABA6A4")
-        self.southFrame.grid(row=1, column=0, columnspan=2, sticky=NSEW)
+        self.southFrame.grid(row=1, column=0, columnspan=2, sticky=NSEW, padx=(2, 427), pady=(0,8))
 
         self.btn_dlib = Button(self.southFrame, text="Data Analysis", width=20, command=self.setDlib)
         self.btn_dlib.configure(background="white", foreground="black")
-        self.btn_dlib.pack(side=LEFT, padx=(100, 10), pady=(10, 10))
+        self.btn_dlib.pack(side=LEFT, padx=(50,0), pady=(10,10))
 
         self.btn_emotion = Button(self.southFrame, text="Emotion Detector", width=20, command=self.setEmotion)
         self.btn_emotion.configure(background="white", foreground="black")
-        self.btn_emotion.pack(side=RIGHT, padx=(10, 100), pady=(10, 10))
+        self.btn_emotion.pack(side=RIGHT, padx=(0,50), pady=(10,10))
 
         self.btn_normal = Button(self.southFrame, text="Normal Mode", width=20, command=self.setNormal)
         self.btn_normal.configure(background="#7EB4D4", foreground="black")
-        self.btn_normal.pack(side=RIGHT, padx=(10, 200), pady=(10, 10))
+        self.btn_normal.pack(side=RIGHT, padx=(0,45), pady=(10,10))
 
         # VideoStream canvas
         self.canvas = Canvas(width=self.vid.width, height=self.vid.height)
-        self.canvas.grid(row=0, column=0, sticky=NSEW, padx=(2, 2), pady=(8, 8))
+        self.canvas.grid(row=0, column=0, sticky=N+E+W, padx=(2, 2), pady=(8, 0))
 
         self.delay = 3
         self.update()
@@ -95,27 +105,30 @@ class App:
         App.emotions_text = "Data output:\n" + "Currently predicting " + emotion + " with a " + "{0:.2f}".format(emotion_probability * 100) + "% accuracy"
     
     def setdlibResults(self, leftAspectRatio, rightAspectRatio):
-        App.emotions_text = "Data output:\n" + "Left Eye Aspect Ratio : " + str(leftAspectRatio) + "\nRight Eye Aspect Ratio : " + str(rightAspectRatio)
+        App.dlib_text = "Data output:\n" + "Left Eye Aspect Ratio : " + "{0:.5f}".format(leftAspectRatio) + "\nRight Eye Aspect Ratio : " + "{0:.5f}".format(rightAspectRatio)
 
-    def getResults(self):
+    def getEmotionResults(self):
         return App.emotions_text
 
-    def aboutPanel(self):
-        messagebox.showinfo("About", "This is the about page for our project\n, talk about uses")
+    def getDlibResults(self):
+        return App.dlib_text
 
-    def setNormal(self):
+    def aboutPanel(self, *args):
+        messagebox.showinfo("About", "This is an AI Facial Analysis application\nDeveloped for CST8354")
+
+    def setNormal(self, *args):
         self.btn_dlib.configure(background='white', foreground='black')
         self.btn_emotion.configure(background='white', foreground='black')
         self.btn_normal.configure(background='#7EB4D4', foreground='black')
         self.vid = MyVideoCapture(self.video_source)
 
-    def setDlib(self):
+    def setDlib(self, *args):
         self.btn_normal.configure(background='white', foreground='black')
         self.btn_emotion.configure(background='white', foreground='black')
         self.btn_dlib.configure(background='#7EB4D4', foreground='black')
         self.vid = FacialCapture(self.video_source)
 
-    def setEmotion(self):
+    def setEmotion(self, *args):
         self.btn_normal.configure(background='white', foreground='black')
         self.btn_dlib.configure(background='white', foreground='black')
         self.btn_emotion.configure(background='#7EB4D4', foreground='black')
@@ -127,8 +140,10 @@ class App:
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image=self.photo, anchor=NW)
-            self.dataDisplay.delete("1.0", END)
-            self.dataDisplay.insert(INSERT, self.getResults())
+            self.topDataDisplay.delete("1.0", END)
+            self.topDataDisplay.insert(INSERT, self.getEmotionResults())
+            self.botDataDisplay.delete("1.0", END)
+            self.botDataDisplay.insert(INSERT, self.getDlibResults())
         self.window.after(self.delay, self.update)
 
 
